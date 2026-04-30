@@ -41,18 +41,23 @@ pipeline {
       }
     }
 
-    stage('Docker Build') {
-      steps {
-        sh 'docker build -t nexus:8082/k8s-app:latest .'
-      }
-    }
+	environment {
+		DOCKERHUB_CREDS = credentials('dockerhub-creds')
+	}
 
-    stage('Push to Nexus') {
-      steps {
-        sh 'docker push nexus:8082/k8s-app:latest'
-      }
-    }
+	stage('Docker Build') {
+		steps {
+			sh 'docker build -t ikscorpio/k8s-app:latest .'
+		}
+	}
 
+	stage('Docker Push') {
+		steps {
+			sh '''echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+    			docker push ikscorpio/k8s-app:latest
+	    		'''
+ 	 	}
+	}
     stage('Deploy to K8s') {
       steps {
         sh 'kubectl apply -f k8s/'
