@@ -5,10 +5,6 @@ pipeline {
     }
   }
 
-  environment {
-    DOCKERHUB_CREDS = credentials('dockerhub-creds')
-  }
-
   stages {
 
     stage('Checkout') {
@@ -25,26 +21,7 @@ pipeline {
       }
     }
 
-    stage('Docker Build') {
-      steps {
-        container('docker') {
-          sh 'cd app && docker build -t ikscorpio/k8s-app:latest .'
-        }
-      }
-    }
-
-    stage('Docker Push') {
-      steps {
-        container('docker') {
-          sh '''
-          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-          docker push ikscorpio/k8s-app:latest
-          '''
-        }
-      }
-    }
-
-    stage('Deploy') {
+    stage('Deploy to Kubernetes') {
       steps {
         container('maven') {
           sh 'kubectl apply -f k8s/'
