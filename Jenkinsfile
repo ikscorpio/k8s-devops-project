@@ -13,8 +13,7 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        git branch: 'main'
-        url: 'https://github.com/ikscorpio/k8s-devops-project.git'
+        git branch: 'main', url: 'https://github.com/ikscorpio/k8s-devops-project.git'
       }
     }
 
