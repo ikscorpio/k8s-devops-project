@@ -13,7 +13,8 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        git 'https://github.com/ikscorpio/k8s-devops-project.git'
+        git branch: 'main'
+        url: 'https://github.com/ikscorpio/k8s-devops-project.git'
       }
     }
 
@@ -28,7 +29,7 @@ pipeline {
     stage('Docker Build') {
       steps {
         container('docker') {
-          sh 'docker build -t YOUR_DOCKERHUB_USERNAME/k8s-app:latest .'
+          sh 'docker build -t ikscorpio/k8s-app:latest .'
         }
       }
     }
@@ -38,7 +39,7 @@ pipeline {
         container('docker') {
           sh '''
           echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-          docker push YOUR_DOCKERHUB_USERNAME/k8s-app:latest
+          docker push ikscorpio/k8s-app:latest
           '''
         }
       }
