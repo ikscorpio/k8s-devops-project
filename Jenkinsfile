@@ -28,7 +28,7 @@ pipeline {
     stage('Docker Build') {
       steps {
         container('docker') {
-          sh 'docker build -t ikscorpio/k8s-app:latest .'
+          sh 'cd app && docker build -t ikscorpio/k8s-app:latest .'
         }
       }
     }
@@ -46,7 +46,9 @@ pipeline {
 
     stage('Deploy') {
       steps {
-        sh 'kubectl apply -f k8s/'
+        container('maven') {
+          sh 'kubectl apply -f k8s/'
+        }
       }
     }
   }
