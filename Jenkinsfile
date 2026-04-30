@@ -2,7 +2,6 @@ pipeline {
   agent {
     kubernetes {
       label 'jenkins-agent'
-      yamlFile 'jenkins/pod.yaml'
     }
   }
 
