@@ -5,38 +5,33 @@ pipeline {
 apiVersion: v1
 kind: Pod
 spec:
+  serviceAccountName: jenkins-sa
+
   containers:
   - name: maven
     image: maven:3.9.9-eclipse-temurin-17
-    command:
-    - cat
+    command: ['cat']
     tty: true
-
-  - name: docker
-    image: docker:24.0.7
-    command:
-    - cat
-    tty: true
-    volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
 
   - name: kubectl
     image: bitnami/kubectl:latest
-    command:
-    - cat
+    command: ['cat']
     tty: true
 
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command: ['cat']
+    tty: true
+    volumeMounts:
+    - name: kaniko-secret
+      mountPath: /kaniko/.docker
+
   volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
+  - name: kaniko-secret
+    secret:
+      secretName: dockerhub-secret
 """
     }
-  }
-
-  environment {
-    DOCKERHUB_CREDS = credentials('dockerhub-creds')
   }
 
   stages {
@@ -70,26 +65,21 @@ spec:
       }
     }
 
-    stage('Docker Build') {
+    stage('Build & Push Image (Kaniko)') {
       steps {
-        container('docker') {
-          sh 'docker build -t ikscorpio/k8s-app:latest .'
-        }
-      }
-    }
-
-    stage('Docker Push') {
-      steps {
-        container('docker') {
+        container('kaniko') {
           sh '''
-          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-          docker push ikscorpio/k8s-app:latest
+          /kaniko/executor \
+            --dockerfile=Dockerfile \
+            --context=$(pwd) \
+            --destination=ikscorpio/k8s-app:latest \
+            --skip-tls-verify
           '''
         }
       }
     }
 
-    stage('Deploy') {
+    stage('Deploy to Kubernetes') {
       steps {
         container('kubectl') {
           sh 'kubectl apply -f k8s/'
