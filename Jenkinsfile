@@ -36,19 +36,26 @@ pipeline {
 
     stage('Docker Build') {
       steps {
-        container('docker') {
-          sh 'docker build -t nexus:8082/k8s-app:latest .'
-        }
+        container('kaniko') {
+		sh '''
+		/kaniko/executor \
+		    --dockerfile=Dockerfile \
+		    --context=$(pwd) \
+		    --destination=ikscorpio/k8s-app:latest \
+		    --insecure \
+		    --skip-tls-verify
+		'''        
+	}
       }
     }
 
-    stage('Push to Nexus') {
-      steps {
-        container('docker') {
-          sh 'docker push nexus:8082/k8s-app:latest'
-        }
-      }
-    }
+#    stage('Push to Nexus') {
+#      steps {
+#        container('docker') {
+#          sh 'docker push nexus:8082/k8s-app:latest'
+#        }
+#      }
+#   }
 
     stage('Deploy to K8s') {
       steps {
