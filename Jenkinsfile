@@ -1,44 +1,23 @@
 pipeline {
   agent {
     kubernetes {
-      yaml """
-apiVersion: v1
-kind: Pod
-spec:
-  serviceAccountName: jenkins-sa
-
-  containers:
-  - name: maven
-    image: maven:3.9.9-eclipse-temurin-17
-    command: ['cat']
-    tty: true
-
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command: ['cat']
-    tty: true
-
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    command: ['cat']
-    tty: true
-    volumeMounts:
-    - name: kaniko-secret
-      mountPath: /kaniko/.docker
-
-  volumes:
-  - name: kaniko-secret
-    secret:
-      secretName: dockerhub-secret
-"""
+      label 'jenkins-agent'
+      yamlFile 'jenkins/pod.yaml'
     }
+  }
+
+  environment {
+    SONAR_HOST_URL = "http://sonarqube:9000"
+    SONAR_TOKEN = credentials('sonar-token')
+    DOCKER_REGISTRY = "<WORKER_NODE_IP>:<NODEPORT>"   // example: 3.67.x.x:32000
+    IMAGE_NAME = "k8s-app"
   }
 
   stages {
 
     stage('Checkout') {
       steps {
-        git branch: 'main', url: 'https://github.com/ikscorpio/k8s-devops-project.git'
+        git 'https://github.com/YOUR_USERNAME/k8s-devops-project.git'
       }
     }
 
@@ -50,39 +29,42 @@ spec:
       }
     }
 
-    stage('SonarQube Analysis') {
+    stage('SonarQube Scan') {
       steps {
         container('maven') {
-          withSonarQubeEnv('sonar') {
-            sh '''
-            cd app
-            mvn sonar:sonar \
-            -Dsonar.projectKey=k8s-devops-app \
-            -Dsonar.projectName="K8s DevOps App"
-            '''
-          }
-        }
-      }
-    }
-
-    stage('Build & Push Image (Kaniko)') {
-      steps {
-        container('kaniko') {
           sh '''
-          /kaniko/executor \
-            --dockerfile=Dockerfile \
-            --context=$(pwd) \
-            --destination=ikscorpio/k8s-app:latest \
-            --skip-tls-verify
+          cd app
+          mvn sonar:sonar \
+          -Dsonar.host.url=$SONAR_HOST_URL \
+          -Dsonar.login=$SONAR_TOKEN
           '''
         }
       }
     }
 
-    stage('Deploy to Kubernetes') {
+    stage('Docker Build') {
       steps {
-        container('kubectl') {
-          sh 'kubectl apply -f k8s/'
+        container('docker') {
+          sh "docker build -t $DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER} ."
+        }
+      }
+    }
+
+    stage('Push to Nexus') {
+      steps {
+        container('docker') {
+          sh "docker push $DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER}"
+        }
+      }
+    }
+
+    stage('Deploy to K8s') {
+      steps {
+        container('maven') {
+          sh """
+          sed -i 's|IMAGE_TAG|$DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER}|g' k8s/deployment.yaml
+          kubectl apply -f k8s/
+          """
         }
       }
     }
