@@ -39,11 +39,11 @@ pipeline {
         container('kaniko') {
 		sh '''
 		/kaniko/executor \
-		    --dockerfile=Dockerfile \
-		    --context=$(pwd) \
-		    --destination=ikscorpio/k8s-app:latest \
-		    --insecure \
-		    --skip-tls-verify
+        		--dockerfile=Dockerfile \
+        		--context=$(pwd) \
+        		--destination=ikscorpio/k8s-app:latest \
+        		--insecure \
+        		--skip-tls-verify
 		'''        
 	}
       }
