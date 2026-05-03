@@ -10,7 +10,10 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-      - /busybox/cat
+      - /busybox/sh
+    args:
+      - -c
+      - "sleep 999999"
     tty: true
 
   - name: kubectl
