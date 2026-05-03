@@ -49,14 +49,14 @@ pipeline {
       }
     }
 
-#    stage('Push to Nexus') {
-#      steps {
-#        container('docker') {
-#          sh 'docker push nexus:8082/k8s-app:latest'
-#        }
-#      }
-#   }
-
+/*  stage('Push to Nexus') {
+      steps {
+        container('docker') {
+          sh 'docker push nexus:8082/k8s-app:latest'
+        }
+      }
+   }
+*/
     stage('Deploy to K8s') {
       steps {
         container('kubectl') {
