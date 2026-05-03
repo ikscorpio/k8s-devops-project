@@ -6,7 +6,7 @@ pipeline {
   }
 
   environment {
-    SONAR_HOST_URL = "http://sonarqube:9000"
+    SONAR_HOST_URL = "http://sonarqube-service:9000"
     SONAR_TOKEN = credentials('sonar-token')
     NEXUS_URL = "http://nexus:8081"
   }
