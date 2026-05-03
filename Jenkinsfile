@@ -9,8 +9,7 @@ pipeline {
   environment {
     SONAR_HOST_URL = "http://sonarqube:9000"
     SONAR_TOKEN = credentials('sonar-token')
-    DOCKER_REGISTRY = "<WORKER_NODE_IP>:<NODEPORT>"   // example: 3.67.x.x:32000
-    IMAGE_NAME = "k8s-app"
+    IMAGE = "ikscorpio/k8s-app"
   }
 
   stages {
@@ -42,27 +41,23 @@ pipeline {
       }
     }
 
-    stage('Docker Build') {
+    stage('Docker Build & Push') {
       steps {
         container('docker') {
-          sh "docker build -t $DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER} ."
-        }
-      }
-    }
-
-    stage('Push to Nexus') {
-      steps {
-        container('docker') {
-          sh "docker push $DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER}"
+          sh '''
+          docker build -t $IMAGE:${BUILD_NUMBER} .
+          docker login -u YOUR_DOCKER_USER -p YOUR_PASSWORD
+          docker push $IMAGE:${BUILD_NUMBER}
+          '''
         }
       }
     }
 
     stage('Deploy to K8s') {
       steps {
-        container('maven') {
+        container('kubectl') {
           sh """
-          sed -i 's|IMAGE_TAG|$DOCKER_REGISTRY/$IMAGE_NAME:${BUILD_NUMBER}|g' k8s/deployment.yaml
+          sed -i 's|IMAGE_TAG|$IMAGE:${BUILD_NUMBER}|g' k8s/deployment.yaml
           kubectl apply -f k8s/
           """
         }
