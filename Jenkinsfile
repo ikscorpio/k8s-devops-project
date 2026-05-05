@@ -38,32 +38,26 @@ pipeline {
 	  steps {
 	    container('kaniko') {
 	      sh '''
-	      /kaniko/executor \
-	        --dockerfile=Dockerfile \
+	      mkdir -p /kaniko/.docker
+
+	      cat <<EOF > /kaniko/.docker/config.json
+	      {
+	        "auths": {
+	          "3.70.131.193:30082": {
+	            "username": "devops",
+	            "password": "devops123"
+	          }
+	        }
+	      }
+	      EOF
+
+      	/kaniko/executor \
+        	--dockerfile=Dockerfile \
 	        --context=$(pwd) \
 	        --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
-	        --insecure \
+        	--insecure \
 	        --skip-tls-verify
-	      '''
-	    }
-	  }
+      	'''
+	    			}	
+  		}	
 	}
-
-/*  stage('Push to Nexus') {
-      steps {
-        container('docker') {
-          sh 'docker push nexus:8082/k8s-app:latest'
-        }
-      }
-   }
-*/
-    stage('Deploy to K8s') {
-      steps {
-        container('kubectl') {
-          sh 'kubectl apply -f k8s/'
-        }
-      }
-    }
-
-  }
-}
