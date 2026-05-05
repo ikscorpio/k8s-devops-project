@@ -34,20 +34,20 @@ pipeline {
       }
     }
 
-    stage('Docker Build') {
-      steps {
-        container('kaniko') {
-		sh '''
-		/kaniko/executor \
-        		--dockerfile=Dockerfile \
-        		--context=$(pwd) \
-        		--destination=ikscorpio/k8s-app:latest \
-        		--insecure \
-        		--skip-tls-verify
-		'''        
+	stage('Build & Push Image') {
+	  steps {
+	    container('kaniko') {
+	      sh '''
+	      /kaniko/executor \
+	        --dockerfile=Dockerfile \
+	        --context=$(pwd) \
+	        --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
+	        --insecure \
+	        --skip-tls-verify
+	      '''
+	    }
+	  }
 	}
-      }
-    }
 
 /*  stage('Push to Nexus') {
       steps {
