@@ -34,30 +34,41 @@ pipeline {
       }
     }
 
-	stage('Build & Push Image') {
-	  steps {
-	    container('kaniko') {
-	      sh '''
-	      mkdir -p /kaniko/.docker
+    stage('Build & Push Image') {
+      steps {
+        container('kaniko') {
+          sh '''
+          mkdir -p /kaniko/.docker
 
-	      cat <<EOF > /kaniko/.docker/config.json
-	      {
-	        "auths": {
-	          "3.70.131.193:30082": {
-	            "username": "devops",
-	            "password": "devops123"
-	          }
-	        }
-	      }
-	      EOF
+          cat <<EOF > /kaniko/.docker/config.json
+          {
+            "auths": {
+              "3.70.131.193:30082": {
+                "username": "devops",
+                "password": "devops123"
+              }
+            }
+          }
+          EOF
 
-      	/kaniko/executor \
-        	--dockerfile=Dockerfile \
-	        --context=$(pwd) \
-	        --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
-        	--insecure \
-	        --skip-tls-verify
-      	'''
-	    			}	
-  		}	
-	}
+          /kaniko/executor \
+            --dockerfile=Dockerfile \
+            --context=$(pwd) \
+            --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
+            --insecure \
+            --skip-tls-verify
+          '''
+        }
+      }
+    }
+
+    stage('Deploy to K8s') {
+      steps {
+        container('kubectl') {
+          sh 'kubectl apply -f k8s/'
+        }
+      }
+    }
+
+  }
+}
