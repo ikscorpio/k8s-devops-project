@@ -65,7 +65,10 @@ pipeline {
     stage('Deploy to K8s') {
       steps {
         container('kubectl') {
-          sh 'kubectl apply -f k8s/'
+         sh '''
+	sed -i "s|IMAGE_TAG|3.70.131.193:30082/docker-hosted/k8s-app:latest|g" k8s/deployment.yaml	 
+	kubectl apply -f k8s/
+	'''
         }
       }
     }

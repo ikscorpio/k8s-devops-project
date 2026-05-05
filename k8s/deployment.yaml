@@ -12,6 +12,8 @@ spec:
       labels:
         app: k8s-devops-app
     spec:
+      imagePullSecrets:
+        - name: nexus-secret
       containers:
       - name: app
         image: IMAGE_TAG   # 👈 Jenkins will replace this
