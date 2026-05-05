@@ -18,9 +18,7 @@ spec:
   - name: kubectl
     image: bitnami/kubectl:latest
     command:
-      - sleep
-    args:
-      - "999999"
+      - cat
     tty: true
 
     volumeMounts:
