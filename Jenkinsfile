@@ -34,40 +34,61 @@ pipeline {
       }
     }
 
-    stage('Build & Push Image') {
-      steps {
+stage('Build & Push Image') {
+    steps {
         container('kaniko') {
-          sh '''
-          mkdir -p /kaniko/.docker
+            sh '''
+            mkdir -p /kaniko/.docker
 
-          cat <<EOF > /kaniko/.docker/config.json
-          {
-            "auths": {
-              "3.70.131.193:30082": {
-                "username": "devops",
-                "password": "devops123"
+            echo '{
+              "auths": {
+                "3.70.131.193:30082": {
+                  "username": "devops",
+                  "password": "devops123"
+                }
               }
-            }
-          }
-          EOF
+            }' > /kaniko/.docker/config.json
 
-          /kaniko/executor \
-            --dockerfile=Dockerfile \
-            --context=$(pwd) \
-            --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
-            --insecure \
-            --skip-tls-verify
-          '''
+            /kaniko/executor \
+              --dockerfile=Dockerfile \
+              --context=$(pwd) \
+              --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
+              --insecure \
+              --skip-tls-verify
+            '''
         }
-      }
     }
-
+}
     stage('Deploy to K8s') {
       steps {
         container('kubectl') {
 		sh '''
 		kubectl get nodes
+stage('Build & Push Image') {
+    steps {
+        container('kaniko') {
+            sh '''
+            mkdir -p /kaniko/.docker
 
+            echo '{
+              "auths": {
+                "3.70.131.193:30082": {
+                  "username": "devops",
+                  "password": "devops123"
+                }
+              }
+            }' > /kaniko/.docker/config.json
+
+            /kaniko/executor \
+              --dockerfile=Dockerfile \
+              --context=$(pwd) \
+              --destination=3.70.131.193:30082/docker-hosted/k8s-app:latest \
+              --insecure \
+              --skip-tls-verify
+            '''
+        }
+    }
+}
 		sed -i "s|IMAGE_TAG|3.70.131.193:30082/docker-hosted/k8s-app:latest|g" k8s/deployment.yaml
 
 		kubectl apply -f k8s/deployment.yaml
