@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: Pod
+
 spec:
   containers:
+
   - name: maven
     image: maven:3.9.9-eclipse-temurin-17
     command: ["cat"]
@@ -14,12 +16,9 @@ spec:
     tty: true
 
   - name: kubectl
-    image: lachlanevenson/k8s-kubectl:v1.30.0
-    command: 
-      - cat
+    image: bitnami/kubectl:1.30
+    command:
+      - sleep
+    args:
+      - "999999"
     tty: true
-
-  volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
