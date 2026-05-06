@@ -16,7 +16,10 @@ pipeline {
     stage('Build') {
       steps {
         container('maven') {
-          sh 'cd app && mvn clean package'
+          sh '''
+          cd app
+          mvn clean package
+          '''
         }
       }
     }
@@ -41,14 +44,16 @@ pipeline {
           sh '''
           mkdir -p /kaniko/.docker
 
-          echo '{
+          cat > /kaniko/.docker/config.json <<EOF
+          {
             "auths": {
               "3.70.131.193:30082": {
                 "username": "devops",
                 "password": "devops123"
               }
             }
-          }' > /kaniko/.docker/config.json
+          }
+EOF
 
           /kaniko/executor \
             --dockerfile=Dockerfile \
@@ -73,6 +78,7 @@ pipeline {
           kubectl apply -f k8s/service.yaml
 
           kubectl get pods
+          kubectl get svc
           '''
         }
       }
